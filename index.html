@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lousa Interativa de Debates — Ensino Superior</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter, Space Grotesk, Playfair Display, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* ==========================================
+           VARIÁVEIS E ESTILOS DOS 3 MODELOS LÚDICOS
+           ========================================== */
+        :root {
+            --transition-speed: 0.45s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* ------------------------------------------
+           MODELO 1: ACADÊMICO MODERNO (Glassmorphism)
+           ------------------------------------------ */
+        body.theme-academic {
+            background: radial-gradient(circle at 15% 20%, #1e293b 0%, #0f172a 55%, #020617 100%);
+            color: #f8fafc;
+        }
+        .theme-academic .font-display {
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.02em;
+        }
+        .theme-academic .board-container {
+            background: rgba(30, 41, 59, 0.45);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        }
+        .theme-academic .card-tile {
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+            border-radius: 1.25rem;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .theme-academic .card-tile:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: rgba(56, 189, 248, 0.6);
+            box-shadow: 0 20px 35px -10px rgba(14, 165, 233, 0.35);
+        }
+        .theme-academic .card-tile.visited {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+        .theme-academic .card-number {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        .theme-academic .modal-card {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 1.5rem;
+            box-shadow: 0 0 80px rgba(14, 165, 233, 0.25);
+        }
+
+        /* ------------------------------------------
+           MODELO 2: LOUSA CRIATIVA (Neo-Brutalismo / Design Thinking)
+           ------------------------------------------ */
+        body.theme-creative {
+            background-color: #fef3c7;
+            background-image: radial-gradient(#d97706 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: #18181b;
+        }
+        .theme-creative .font-display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .theme-creative .board-container {
+            background: #ffffff;
+            border: 4px solid #18181b;
+            box-shadow: 12px 12px 0px #18181b;
+            border-radius: 1rem;
+        }
+        .theme-creative .card-tile {
+            background: #fde047;
+            border: 3px solid #18181b;
+            box-shadow: 6px 6px 0px #18181b;
+            border-radius: 0.75rem;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            color: #18181b;
+        }
+        .theme-creative .card-tile:nth-child(3n+1) { background: #a7f3d0; }
+        .theme-creative .card-tile:nth-child(3n+2) { background: #bfdbfe; }
+        .theme-creative .card-tile:nth-child(3n+3) { background: #fbcfe8; }
+        .theme-creative .card-tile:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 10px 10px 0px #18181b;
+        }
+        .theme-creative .card-tile:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #18181b;
+        }
+        .theme-creative .card-tile.visited {
+            background: #e4e4e7 !important;
+            opacity: 0.85;
+        }
+        .theme-creative .card-number {
+            color: #18181b;
+            font-family: 'Space Grotesk', sans-serif;
+            text-shadow: 2px 2px 0px #ffffff;
+        }
+        .theme-creative .modal-card {
+            background: #ffffff;
+            border: 4px solid #18181b;
+            box-shadow: 16px 16px 0px #18181b;
+            border-radius: 1rem;
+            color: #18181b;
+        }
+        .theme-creative .topbar-ui {
+            background: #ffffff !important;
+            border-bottom: 4px solid #18181b !important;
+            color: #18181b !important;
+        }
+
+        /* ------------------------------------------
+           MODELO 3: AUDITÓRIO IMERSIVO (Spotlight & Cinema)
+           ------------------------------------------ */
+        body.theme-auditorium {
+            background-color: #09090b;
+            color: #fafafa;
+        }
+        .theme-auditorium .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        .theme-auditorium .board-container {
+            background: #121215;
+            border: 1px solid #27272a;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95);
+            border-radius: 0.5rem;
+        }
+        .theme-auditorium .card-tile {
+            background: radial-gradient(circle at center, #27272a 0%, #18181b 100%);
+            border: 1px solid #3f3f46;
+            border-radius: 0.375rem;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .theme-auditorium .card-tile::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .theme-auditorium .card-tile:hover {
+            border-color: #f59e0b;
+            transform: scale(1.03);
+            box-shadow: 0 0 35px rgba(245, 158, 11, 0.25);
+        }
+        .theme-auditorium .card-tile:hover::before {
+            opacity: 1;
+        }
+        .theme-auditorium .card-tile.visited {
+            border-color: #3f3f46;
+            background: #09090b;
+        }
+        .theme-auditorium .card-number {
+            font-family: 'Playfair Display', serif;
+            color: #fbbf24;
+        }
+        .theme-auditorium .modal-card {
+            background: #09090b;
+            border: 1px solid #f59e0b;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 120px rgba(245, 158, 11, 0.2);
+        }
+
+        /* ==========================================
+           ANIMAÇÕES DE AMPLIAÇÃO CENTRALIZADA
+           ========================================== */
+        @keyframes zoomRevealAcademic {
+            0% { opacity: 0; transform: scale(0.6) rotateX(20deg); }
+            100% { opacity: 1; transform: scale(1) rotateX(0deg); }
+        }
+        @keyframes zoomRevealCreative {
+            0% { opacity: 0; transform: scale(0.4) rotate(-6deg); }
+            70% { transform: scale(1.04) rotate(1deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes zoomRevealAuditorium {
+            0% { opacity: 0; transform: scale(0.85); filter: brightness(0); }
+            100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+        }
+
+        .theme-academic .animate-zoom-modal {
+            animation: zoomRevealAcademic 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .theme-creative .animate-zoom-modal {
+            animation: zoomRevealCreative 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .theme-auditorium .animate-zoom-modal {
+            animation: zoomRevealAuditorium 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="theme-academic min-h-screen flex flex-col justify-between select-none">
+
+    <!-- ==========================================
+         BARRA SUPERIOR: CONTROLES E SELETOR DE MODELOS
+         ========================================== -->
+    <header class="topbar-ui w-full bg-slate-900/80 backdrop-blur-md border-b border-white/10 px-4 py-3 sticky top-0 z-30 transition-colors">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Marca & Status -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+                    <i class="ph-bold ph-chalkboard-teacher text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-lg sm:text-xl leading-tight">Lousa de Debates</h1>
+                    <p class="text-xs opacity-75">Dinâmica Interativa • Ensino Superior</p>
+                </div>
+            </div>
+
+            <!-- Seletor dos 3 Modelos de Simulação -->
+            <div class="flex items-center bg-black/20 p-1 rounded-xl border border-white/10 overflow-x-auto max-w-full">
+                <span class="text-xs font-medium px-2.5 opacity-70 hidden md:inline-block">Modelo Visual:</span>
+                
+                <button onclick="setTheme('academic')" id="btn-theme-academic"
+                    class="theme-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-sky-500 text-white shadow">
+                    <i class="ph-fill ph-Sparkle"></i>
+                    <span>1. Acadêmico Moderno</span>
+                </button>
+
+                <button onclick="setTheme('creative')" id="btn-theme-creative"
+                    class="theme-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 opacity-75 hover:opacity-100">
+                    <i class="ph-fill ph-note-pencil"></i>
+                    <span>2. Lousa Criativa</span>
+                </button>
+
+                <button onclick="setTheme('auditorium')" id="btn-theme-auditorium"
+                    class="theme-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 opacity-75 hover:opacity-100">
+                    <i class="ph-fill ph-projector-screen"></i>
+                    <span>3. Auditório Imersivo</span>
+                </button>
+            </div>
+
+            <!-- Ações Rápidas: Progresso, Editar Imagens, Reiniciar -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Contador de Quadrados Debatidos -->
+                <div class="px-3 py-1.5 rounded-lg bg-black/20 border border-white/10 text-xs sm:text-sm font-mono flex items-center gap-2" title="Progresso da Dinâmica">
+                    <i class="ph-bold ph-check-circle text-emerald-400"></i>
+                    <span id="progress-counter">0/9</span>
+                </div>
+
+                <!-- Botão Editar Imagens -->
+                <button onclick="openConfigModal()" 
+                    class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 active:scale-95">
+                    <i class="ph-bold ph-images text-base"></i>
+                    <span>Editar Imagens</span>
+                </button>
+
+                <!-- Botão Reiniciar -->
+                <button onclick="resetBoard()" title="Reiniciar todos os 9 quadrados"
+                    class="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 hover:text-white text-rose-400 border border-rose-500/30 transition-all active:scale-95">
+                    <i class="ph-bold ph-arrow-counter-clockwise text-lg"></i>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- ==========================================
+         ÁREA PRINCIPAL: A LOUSA COM 9 QUADRADOS (3x3)
+         ========================================== -->
+    <main class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 w-full max-w-6xl mx-auto">
+        
+        <!-- Instrução contextual do modelo atual -->
+        <div class="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 px-1">
+            <div class="flex items-center gap-2">
+                <span id="theme-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                    Modelo 1: Glassmorphism & Clean
+                </span>
+                <p id="theme-desc" class="text-xs sm:text-sm opacity-75">
+                    Clique em um número de 1 a 9 para centralizar, ampliar a imagem na lousa e iniciar o debate.
+                </p>
+            </div>
+            <div class="flex items-center gap-3 text-xs opacity-75">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span> Disponível</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Já Debatido</span>
+            </div>
+        </div>
+
+        <!-- Container da Lousa 3x3 -->
+        <div class="board-container w-full p-4 sm:p-6 md:p-8 rounded-2xl transition-all">
+            <div id="grid-board" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 aspect-auto sm:aspect-[16/10] min-h-[480px]">
+                <!-- Os 9 quadrados são gerados dinamicamente via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Banner de Conclusão quando os 9 quadrados forem debatidos -->
+        <div id="completion-banner" class="hidden mt-6 w-full p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse">
+            <div class="flex items-center gap-3">
+                <i class="ph-fill ph-confetti text-3xl text-emerald-400"></i>
+                <div>
+                    <h3 class="font-bold text-base">Ciclo de Debates Concluído!</h3>
+                    <p class="text-xs opacity-80">Todos os 9 quadrados foram revelados e discutidos pela turma.</p>
+                </div>
+            </div>
+            <button onclick="resetBoard()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all">
+                Iniciar Novo Ciclo
+            </button>
+        </div>
+    </main>
+
+    <!-- ==========================================
+         MODAL DE AMPLIAÇÃO CENTRALIZADA NA LOUSA (ZOOM DO QUADRADO)
+         ========================================== -->
+    <div id="zoom-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-6 md:p-10 bg-black/80 backdrop-blur-md transition-opacity">
+        
+        <!-- Card Centralizado e Ampliado -->
+        <div id="zoom-card" class="modal-card w-full max-w-5xl overflow-hidden flex flex-col max-h-[92vh] animate-zoom-modal">
+            
+            <!-- Cabeçalho da Lousa Ampliada -->
+            <div class="flex items-center justify-between px-5 py-4 border-b border-white/15 bg-black/20">
+                <div class="flex items-center gap-3">
+                    <span id="zoom-number-badge" class="w-10 h-10 rounded-xl bg-sky-500 text-slate-950 font-extrabold text-xl flex items-center justify-center shadow">
+                        1
+                    </span>
+                    <div>
+                        <span class="text-xs uppercase tracking-wider opacity-60 font-semibold block">Tópico de Debate Selecionado</span>
+                        <h2 id="zoom-title" class="font-display font-bold text-lg sm:text-xl leading-snug">Título ou Eixo Temático</h2>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Cronômetro opcional de debate para engajamento em aula -->
+                    <button onclick="toggleTimer()" id="timer-btn" title="Iniciar/Pausar cronômetro de debate"
+                        class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs sm:text-sm font-mono flex items-center gap-1.5 transition-all">
+                        <i class="ph-bold ph-timer text-amber-400 text-base"></i>
+                        <span id="timer-display">00:00</span>
+                    </button>
+
+                    <!-- Botão Desampliar / Voltar para a Lousa -->
+                    <button onclick="closeZoomModal()" 
+                        class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                        <i class="ph-bold ph-corners-in text-lg"></i>
+                        <span>Desampliar e Escolher Outro</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Corpo com a Imagem Revelada em Destaque -->
+            <div class="relative flex-1 bg-black/40 flex items-center justify-center overflow-hidden min-h-[300px] sm:min-h-[420px]">
+                <img id="zoom-image" src="" alt="Imagem de Debate" 
+                    class="w-full h-full max-h-[62vh] object-contain select-none transition-transform duration-500"
+                    onerror="this.src='https://placehold.co/1200x800/1e293b/38bdf8?text=Imagem+Indispon%C3%ADvel'">
+                
+                <!-- Botão sutil para alternar ajuste da imagem (Conter / Preencher) -->
+                <button onclick="toggleImageFit()" title="Alternar ajuste da imagem"
+                    class="absolute bottom-3 right-3 p-2.5 rounded-xl bg-black/60 hover:bg-black/80 text-white border border-white/15 backdrop-blur-md transition-all">
+                    <i class="ph-bold ph-arrows-out-simple text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Rodapé do Modal: Pergunta Norteadora & Controles -->
+            <div class="p-4 sm:p-5 bg-black/30 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-start gap-3">
+                    <i class="ph-fill ph-chats-circle text-2xl text-sky-400 shrink-0 mt-0.5"></i>
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-sky-400 block">Questão Norteadora para a Turma:</span>
+                        <p id="zoom-prompt" class="text-sm sm:text-base font-medium leading-relaxed mt-0.5">
+                            Como esta imagem se conecta com os desafios contemporâneos da nossa área de atuação?
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <button onclick="openSingleEditFromZoom()" 
+                        class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                        <i class="ph-bold ph-pencil-simple"></i>
+                        <span>Trocar esta Imagem</span>
+                    </button>
+                    <button onclick="closeZoomModal()" 
+                        class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-lg transition-all">
+                        <i class="ph-bold ph-check-bold"></i>
+                        <span>Concluir Debate deste Número</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL DE EDIÇÃO DAS 9 IMAGENS E TEMAS
+         ========================================== -->
+    <div id="config-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md">
+        <div class="bg-slate-900 border border-slate-700 text-slate-100 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Topo do Editor -->
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="ph-fill ph-sliders-horizontal text-2xl text-indigo-400"></i>
+                    <div>
+                        <h2 class="font-bold text-lg">Configurar Imagens e Temas dos 9 Quadrados</h2>
+                        <p class="text-xs text-slate-400">Cole o link (URL) de uma imagem da web ou envie um arquivo direto do seu computador.</p>
+                    </div>
+                </div>
+                <button onclick="closeConfigModal()" class="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                    <i class="ph-bold ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Lista Editável dos 9 Quadrados -->
+            <div id="config-list" class="p-6 overflow-y-auto space-y-4 flex-1">
+                <!-- Preenchido dinamicamente pelo JS -->
+            </div>
+
+            <!-- Rodapé do Editor -->
+            <div class="px-6 py-4 bg-slate-800/90 border-t border-slate-700 flex flex-wrap items-center justify-between gap-3">
+                <button onclick="restoreDefaultData()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                    <i class="ph-bold ph-arrow-u-up-left"></i>
+                    <span>Restaurar Imagens Padrão</span>
+                </button>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-sm font-semibold transition-all">
+                        Cancelar
+                    </button>
+                    <button onclick="saveConfigChanges()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold flex items-center gap-1.5 shadow-lg transition-all">
+                        <i class="ph-bold ph-floppy-disk"></i>
+                        <span>Salvar Alterações na Lousa</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rodapé Discreto -->
+    <footer class="w-full py-3 px-4 text-center text-xs opacity-60 border-t border-white/5">
+        Dica de Apresentação: Você pode usar as teclas <kbd class="px-1.5 py-0.5 rounded bg-white/10 font-mono">1</kbd> a <kbd class="px-1.5 py-0.5 rounded bg-white/10 font-mono">9</kbd> do teclado para abrir um quadrado rapidamente e <kbd class="px-1.5 py-0.5 rounded bg-white/10 font-mono">ESC</kbd> para desampliar.
+    </footer>
+
+    <!-- ==========================================
+         LÓGICA JAVASCRIPT DA LOUSA INTERATIVA
+         ========================================== -->
+    <script>
+        // Dados padrão pensados para debates interdisciplinares no Ensino Superior
+        const defaultSquaresData = [
+            {
+                id: 1,
+                title: "Inteligência Artificial & Ética",
+                prompt: "Até que ponto a automação algorítmica deve substituir a tomada de decisão humana em setores críticos?",
+                imageUrl: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 2,
+                title: "Sustentabilidade e Cidades do Futuro",
+                prompt: "Como conciliar o crescimento econômico acelerado com a urgência da regeneração ambiental urbana?",
+                imageUrl: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 3,
+                title: "Saúde Mental na Era Hiperconectada",
+                prompt: "A conectividade constante aproxima profissionais ou intensifica o esgotamento cognitivo na universidade e no trabalho?",
+                imageUrl: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 4,
+                title: "Futuro do Trabalho e Novas Competências",
+                prompt: "Quais habilidades humanas continuarão insubstituíveis diante das transformações do mercado nos próximos 10 anos?",
+                imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 5,
+                title: "Ciência Aberta e Democratização do Saber",
+                prompt: "O conhecimento produzido nas universidades consegue chegar e transformar efetivamente a comunidade ao redor?",
+                imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 6,
+                title: "Diversidade, Equidade e Inclusão",
+                prompt: "De que maneira equipes plurais impactam a qualidade da inovação e a resolução de problemas complexos?",
+                imageUrl: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 7,
+                title: "Desinformação e Pensamento Crítico",
+                prompt: "Qual é a responsabilidade social do profissional graduado no combate às bolhas informacionais e notícias falsas?",
+                imageUrl: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 8,
+                title: "Globalização vs. Identidades Locais",
+                prompt: "Como preservar saberes regionais e culturais em um mundo guiado por padrões globais homogêneos?",
+                imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            },
+            {
+                id: 9,
+                title: "Liderança Empática e Colaborativa",
+                prompt: "O que diferencia um chefe tradicional de um líder capaz de inspirar autonomia e propósito coletivo?",
+                imageUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+                visited: false
+            }
+        ];
+
+        // Estado da aplicação
+        let squaresData = JSON.parse(JSON.stringify(defaultSquaresData));
+        let currentTheme = 'academic';
+        let activeSquareIndex = null;
+        let timerInterval = null;
+        let timerSeconds = 0;
+
+        // Informações descritivas dos 3 modelos solicitados
+        const themeMetadata = {
+            academic: {
+                badge: "Modelo 1: Acadêmico Moderno (Glassmorphism)",
+                desc: "Estética translúcida de alto contraste com revelação suave em perspectiva 3D."
+            },
+            creative: {
+                badge: "Modelo 2: Lousa Criativa (Neo-Brutalismo Studio)",
+                desc: "Inspirado em quadros de Design Thinking com cores vibrantes, bordas marcadas e pop-out elástico."
+            },
+            auditorium: {
+                badge: "Modelo 3: Auditório Imersivo (Spotlight Cinema)",
+                desc: "Foco máximo para projeção em sala escura com iluminação de holofote e foco dramático."
+            }
+        };
+
+        // Inicialização ao carregar a página
+        window.onload = function() {
+            renderBoard();
+            setupKeyboardShortcuts();
+        };
+
+        /**
+         * Renderiza os 9 quadrados numerados na lousa 3x3
+         */
+        function renderBoard() {
+            const grid = document.getElementById('grid-board');
+            grid.innerHTML = '';
+
+            let visitedCount = 0;
+
+            squaresData.forEach((item, index) => {
+                if (item.visited) visitedCount++;
+
+                const tile = document.createElement('button');
+                tile.type = 'button';
+                tile.onclick = () => selectSquare(index);
+                tile.className = `card-tile group relative flex flex-col items-center justify-center p-4 overflow-hidden cursor-pointer select-none min-h-[140px] ${item.visited ? 'visited' : ''}`;
+
+                // Se já foi escolhido/debatido, mostra miniatura sutil de fundo para memória visual da turma
+                const backgroundPreview = item.visited 
+                    ? `<img src="${item.imageUrl}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-40 transition-opacity pointer-events-none" onerror="this.style.display='none'">`
+                    : '';
+
+                // Badge de status no canto superior
+                const statusBadge = item.visited
+                    ? `<span class="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500 text-slate-950 flex items-center gap-1 shadow">
+                         <i class="ph-bold ph-check"></i> Debatido
+                       </span>`
+                    : `<span class="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/10 backdrop-blur-sm opacity-75 group-hover:opacity-100 transition-opacity">
+                         Clique para revelar
+                       </span>`;
+
+                // Subtítulo revelado apenas após debatido (ou dica sutil)
+                const bottomCaption = item.visited
+                    ? `<span class="relative z-10 mt-2 text-xs font-semibold line-clamp-1 px-2 py-0.5 rounded bg-black/40 text-white">${item.title}</span>`
+                    : `<span class="relative z-10 mt-2 text-xs opacity-60 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                         <i class="ph-bold ph-corners-out"></i> Ampliar na lousa
+                       </span>`;
+
+                tile.innerHTML = `
+                    ${backgroundPreview}
+                    ${statusBadge}
+                    <div class="relative z-10 flex flex-col items-center justify-center">
+                        <span class="card-number text-5xl sm:text-6xl md:text-7xl leading-none tracking-tight transition-transform duration-300 group-hover:scale-110">
+                            ${item.id}
+                        </span>
+                        ${bottomCaption}
+                    </div>
+                `;
+
+                grid.appendChild(tile);
+            });
+
+            // Atualiza contador de progresso
+            document.getElementById('progress-counter').textContent = `${visitedCount}/9`;
+
+            // Mostra ou oculta banner de conclusão
+            const banner = document.getElementById('completion-banner');
+            if (visitedCount === 9) {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Seleciona um quadrado, marca como visitado e abre centralizado e ampliado na lousa
+         */
+        function selectSquare(index) {
+            activeSquareIndex = index;
+            const item = squaresData[index];
+            item.visited = true;
+
+            // Preenche informações do modal ampliado
+            document.getElementById('zoom-number-badge').textContent = item.id;
+            document.getElementById('zoom-title').textContent = item.title;
+            document.getElementById('zoom-prompt').textContent = item.prompt;
+            
+            const imgEl = document.getElementById('zoom-image');
+            imgEl.src = item.imageUrl;
+
+            // Reinicia e dispara animação do modal
+            const zoomCard = document.getElementById('zoom-card');
+            zoomCard.classList.remove('animate-zoom-modal');
+            void zoomCard.offsetWidth; // Reflow para reiniciar animação CSS
+            zoomCard.classList.add('animate-zoom-modal');
+
+            // Exibe o overlay centralizado
+            const overlay = document.getElementById('zoom-overlay');
+            overlay.classList.remove('hidden');
+
+            // Reinicia cronômetro para o debate atual
+            resetTimer();
+            renderBoard();
+        }
+
+        /**
+         * Desamplia o quadrado atual e retorna para a lousa 3x3
+         */
+        function closeZoomModal() {
+            const overlay = document.getElementById('zoom-overlay');
+            overlay.classList.add('hidden');
+            stopTimer();
+            activeSquareIndex = null;
+            renderBoard();
+        }
+
+        /**
+         * Alterna entre object-contain e object-cover na imagem ampliada
+         */
+        function toggleImageFit() {
+            const img = document.getElementById('zoom-image');
+            if (img.classList.contains('object-contain')) {
+                img.classList.remove('object-contain');
+                img.classList.add('object-cover');
+            } else {
+                img.classList.remove('object-cover');
+                img.classList.add('object-contain');
+            }
+        }
+
+        /**
+         * Altera entre os 3 modelos visuais solicitados
+         */
+        function setTheme(themeName) {
+            currentTheme = themeName;
+            document.body.className = `theme-${themeName} min-h-screen flex flex-col justify-between select-none`;
+
+            // Atualiza botões da barra superior
+            ['academic', 'creative', 'auditorium'].forEach(t => {
+                const btn = document.getElementById(`btn-theme-${t}`);
+                if (t === themeName) {
+                    btn.className = "theme-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-sky-500 text-white shadow";
+                } else {
+                    btn.className = "theme-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 opacity-75 hover:opacity-100";
+                }
+            });
+
+            // Atualiza textos explicativos do modelo
+            document.getElementById('theme-badge').textContent = themeMetadata[themeName].badge;
+            document.getElementById('theme-desc').textContent = themeMetadata[themeName].desc;
+        }
+
+        /**
+         * Reinicia o ciclo da dinâmica (todos os 9 quadrados voltam ao estado oculto)
+         */
+        function resetBoard() {
+            squaresData.forEach(item => item.visited = false);
+            closeZoomModal();
+            renderBoard();
+        }
+
+        /* ==========================================
+           FUNÇÕES DO CRONÔMETRO DE DEBATE
+           ========================================== */
+        function toggleTimer() {
+            if (timerInterval) {
+                stopTimer();
+            } else {
+                timerInterval = setInterval(() => {
+                    timerSeconds++;
+                    updateTimerDisplay();
+                }, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timerSeconds = 0;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const secs = String(timerSeconds % 60).padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${mins}:${secs}`;
+        }
+
+        /* ==========================================
+           EDITOR DE IMAGENS E PERGUNTAS (9 QUADRADOS)
+           ========================================== */
+        function openConfigModal(focusIndex = null) {
+            const list = document.getElementById('config-list');
+            list.innerHTML = '';
+
+            squaresData.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.id = `config-row-${idx}`;
+                row.className = "p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 flex flex-col md:flex-row items-start md:items-center gap-4";
+                
+                row.innerHTML = `
+                    <!-- Número e Miniatura -->
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span class="w-9 h-9 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center text-base">
+                            ${item.id}
+                        </span>
+                        <img id="preview-img-${idx}" src="${item.imageUrl}" alt="Preview ${item.id}" 
+                            class="w-20 h-14 object-cover rounded-lg border border-slate-600 bg-slate-900"
+                            onerror="this.src='https://placehold.co/160x110/1e293b/94a3b8?text=Sem+Foto'">
+                    </div>
+
+                    <!-- Campos de Edição -->
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        <div>
+                            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Título / Tema do Quadrado ${item.id}</label>
+                            <input type="text" id="input-title-${idx}" value="${item.title.replace(/"/g, '&quot;')}" 
+                                class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">URL da Imagem ou Upload Local</label>
+                            <div class="flex gap-1.5">
+                                <input type="text" id="input-url-${idx}" value="${item.imageUrl.replace(/"/g, '&quot;')}" 
+                                    oninput="updatePreview(${idx}, this.value)"
+                                    placeholder="https://..."
+                                    class="flex-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <label class="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-semibold cursor-pointer flex items-center gap-1 shrink-0" title="Escolher arquivo de imagem do computador">
+                                    <i class="ph-bold ph-upload-simple text-base"></i>
+                                    <span>Arquivo</span>
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(${idx}, this)">
+                                </label>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Pergunta / Provocação para Debate</label>
+                            <input type="text" id="input-prompt-${idx}" value="${item.prompt.replace(/"/g, '&quot;')}" 
+                                class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                `;
+
+                list.appendChild(row);
+            });
+
+            document.getElementById('config-overlay').classList.remove('hidden');
+
+            // Se foi aberto a partir de um quadrado específico ampliado, rola até ele
+            if (focusIndex !== null) {
+                setTimeout(() => {
+                    const targetRow = document.getElementById(`config-row-${focusIndex}`);
+                    if (targetRow) {
+                        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetRow.classList.add('ring-2', 'ring-indigo-500');
+                    }
+                }, 100);
+            }
+        }
+
+        function openSingleEditFromZoom() {
+            const currentIdx = activeSquareIndex;
+            closeZoomModal();
+            openConfigModal(currentIdx);
+        }
+
+        function updatePreview(idx, url) {
+            const img = document.getElementById(`preview-img-${idx}`);
+            if (img) img.src = url;
+        }
+
+        /**
+         * Permite carregar uma imagem direto do computador (FileReader DataURL)
+         */
+        function handleFileUpload(idx, inputEl) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                const urlInput = document.getElementById(`input-url-${idx}`);
+                if (urlInput) urlInput.value = dataUrl;
+                updatePreview(idx, dataUrl);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveConfigChanges() {
+            squaresData.forEach((item, idx) => {
+                const newTitle = document.getElementById(`input-title-${idx}`).value.trim();
+                const newUrl = document.getElementById(`input-url-${idx}`).value.trim();
+                const newPrompt = document.getElementById(`input-prompt-${idx}`).value.trim();
+
+                if (newTitle) item.title = newTitle;
+                if (newUrl) item.imageUrl = newUrl;
+                if (newPrompt) item.prompt = newPrompt;
+            });
+
+            closeConfigModal();
+            renderBoard();
+        }
+
+        function restoreDefaultData() {
+            squaresData = JSON.parse(JSON.stringify(defaultSquaresData));
+            closeConfigModal();
+            renderBoard();
+        }
+
+        function closeConfigModal() {
+            document.getElementById('config-overlay').classList.add('hidden');
+        }
+
+        /**
+         * Atalhos de teclado para facilitar o uso pelo professor/mediador em sala
+         */
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                // Ignora se estiver digitando em um input
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+                const zoomOpen = !document.getElementById('zoom-overlay').classList.contains('hidden');
+                const configOpen = !document.getElementById('config-overlay').classList.contains('hidden');
+
+                if (e.key === 'Escape') {
+                    if (zoomOpen) closeZoomModal();
+                    if (configOpen) closeConfigModal();
+                }
+
+                // Teclas 1 a 9 abrem diretamente o quadrado quando na lousa principal
+                if (!zoomOpen && !configOpen && e.key >= '1' && e.key <= '9') {
+                    const idx = parseInt(e.key, 10) - 1;
+                    selectSquare(idx);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
